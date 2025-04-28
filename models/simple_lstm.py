@@ -27,23 +27,17 @@ class SimpleLSTM(nn.Module):
 
     def forward(self, x):
         batch_size, seq_len, feature_dim = x.size()
-
         # Conv1D needs (batch_size, features, seq_len)
         x = x.permute(0, 2, 1)
         x = F.relu(self.conv1d(x))
         x = self.pool(x)
-
         # Prepare for LSTM: (batch_size, seq_len, features)
         x = x.permute(0, 2, 1)
-
         x, _ = self.lstm(x)
-
-        # Use only the last timestep output
         x = x[:, -1, :]
-
         x = self.dropout(x)
         x = F.relu(self.dense1(x))
 
-        logits = self.output_layer(x)  # NO softmax here
+        logits = self.output_layer(x)
 
         return logits

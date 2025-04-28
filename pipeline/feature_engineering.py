@@ -26,15 +26,13 @@ class FeatureEngineering:
         save_indexes = [index for index, result in self.target_int_mapping.items()
                         if result <= self.limit_contestants]
         if (len(save_indexes) < self.limit_contestants):
-            print('Not enough horses to pick from')
-            return False
+            raise ValueError('Not enough horses to pick from')
         if (self.winner_index not in save_indexes):
             print('Winner not in top horses')
-            return False
+            raise ValueError('Winner not in top horses')
         # Get all columns of the top horses
         save_columns = [column for column in self.df.columns if int(column.split('_')[-1]) in save_indexes]
         self.df = self.df[save_columns]
-        return True
 
     def create_new_features(self):
         # get distance to finish for each horse
@@ -58,8 +56,6 @@ class FeatureEngineering:
     def prepare_features(self):
         self.update_results()
         self.drop_columns()
-        all_good = self.pick_top_horses()
-        if not all_good:
-            return self.df, False
+        self.pick_top_horses()
         self.create_new_features()
-        return self.df, True
+        return self.df
