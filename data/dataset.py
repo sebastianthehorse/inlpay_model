@@ -6,9 +6,9 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-from .preprocessing import PreProcessing, DataProcessing
-from .window import CreateWindowTensor
 from .feature_engineering import FeatureEngineering
+from .preprocessing import DataProcessing, PreProcessing
+from .window import CreateWindowTensor
 
 
 class RaceWindowDataset(Dataset):
@@ -18,7 +18,9 @@ class RaceWindowDataset(Dataset):
     its winner index label (int).
     """
 
-    def __init__(self, files: Sequence[Path], training_features: List[str], target: str, limit_contestants: int, window_timesteps: int, randomize: bool=False):
+    def __init__(
+        self, files: Sequence[Path], training_features: List[str], target: str, limit_contestants: int, window_timesteps: int, randomize: bool = False
+    ):
         self.X, self.y = self._combine_races_to_tensor(
             files,
             training_features,
@@ -38,7 +40,9 @@ class RaceWindowDataset(Dataset):
         )
 
     @staticmethod
-    def _combine_races_to_tensor(pkl_files: Sequence[Path], training_features: List[str], target: str, limit_contestants: int, window_timesteps: int, randomize: bool):
+    def _combine_races_to_tensor(
+        pkl_files: Sequence[Path], training_features: List[str], target: str, limit_contestants: int, window_timesteps: int, randomize: bool
+    ):
         X_list, y_list = [], []
         for pkl_file in pkl_files:
             df_race = pd.read_pickle(pkl_file)
@@ -66,7 +70,7 @@ class RaceWindowDataset(Dataset):
             try:
                 df_feature = feature_prep.prepare_features()
             except ValueError as e:
-                print(f'#### BROKEN DF: {pkl_file}\n#### STATUS: {e}')
+                print(f"#### BROKEN DF: {pkl_file}\n#### STATUS: {e}")
                 continue
             if len(df_feature) < window_timesteps:
                 continue  # not enough timesteps

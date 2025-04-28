@@ -4,13 +4,22 @@ from typing import Sequence
 import torch
 from torch.utils.data import DataLoader
 
-from models.simple_lstm import SimpleLSTM
 from data.dataset import RaceWindowDataset
 from engine.callbacks import EarlyStopping
+from models.simple_lstm import SimpleLSTM
 
 
 class Trainer:
-    def __init__(self, training_features, added_features, limit_contestants, window_timesteps, lr: float=5e-4, batch_size: int=64, device: str | torch.device="cpu"):
+    def __init__(
+        self,
+        training_features,
+        added_features,
+        limit_contestants,
+        window_timesteps,
+        lr: float = 5e-4,
+        batch_size: int = 64,
+        device: str | torch.device = "cpu",
+    ):
         self.device = torch.device(device)
         self.batch_size = batch_size
 
@@ -44,8 +53,7 @@ class Trainer:
             val_loss = self._run_epoch(val_loader, train=False)
             print(f"Epoch {epoch:3d} • train={train_loss:.3f} • val={val_loss:.3f}")
             if stopper.step(val_loss):
-                print("Early stopping triggered → best val loss",
-                      f"{stopper.best_score:.3f}")
+                print("Early stopping triggered → best val loss", f"{stopper.best_score:.3f}")
                 break
 
     def _run_epoch(self, loader: DataLoader, train: bool):

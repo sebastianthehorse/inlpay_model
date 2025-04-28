@@ -14,11 +14,7 @@ class EarlyStopping:
             self.best_score = current
             return False
 
-        improve = (
-            current < self.best_score - self.min_delta
-            if self.mode == "min"
-            else current > self.best_score + self.min_delta
-        )
+        improve = current < self.best_score - self.min_delta if self.mode == "min" else current > self.best_score + self.min_delta
 
         if improve:
             self.best_score = current

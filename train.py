@@ -1,26 +1,17 @@
-"""Command line entry point
-
-Examples:
-  # Train only
-  python -m inlpay_model.train --config configs/baseline.yaml
-
-  # Train then evaluate on held out test folder
-  python -m inlpay_model.train --config configs/baseline.yaml --evaluate --test_dir ~/Projects/data/hts/test
-"""
-
-from pathlib import Path
 import argparse
-import yaml
 import json
+from pathlib import Path
 
-from engine.trainer import Trainer
+import yaml
+
 from engine.evaluator import Evaluator
+from engine.trainer import Trainer
 
 
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--config", type=Path, required=True)
-    p.add_argument('--evaluate', nargs="?", default=False, const=True, help="Run evaluation after training")
+    p.add_argument("--evaluate", nargs="?", default=False, const=True, help="Run evaluation after training")
     return p.parse_args()
 
 

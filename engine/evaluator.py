@@ -7,12 +7,12 @@ import numpy as np
 import torch
 from sklearn.metrics import (
     accuracy_score,
+    auc,
     average_precision_score,
     brier_score_loss,
     log_loss,
     precision_recall_curve,
     roc_curve,
-    auc,
 )
 
 from data.dataset import RaceWindowDataset
@@ -34,7 +34,7 @@ class Evaluator:
             for X, y in loader:
                 X, y = X.to(self.device), y.to(self.device)
                 logits = self.model(X)
-                loss   = self.loss_fn(logits, y)
+                loss = self.loss_fn(logits, y)
                 running_loss += loss.item() * X.size(0)
 
                 probs = torch.softmax(logits, dim=1).cpu().numpy()
@@ -42,8 +42,8 @@ class Evaluator:
                 y_true.append(y.cpu().numpy())
 
         y_pred_prob = np.concatenate(y_pred_prob)
-        y_true_cls  = np.concatenate(y_true)
-        avg_loss    = running_loss / len(ds)
+        y_true_cls = np.concatenate(y_true)
+        avg_loss = running_loss / len(ds)
 
         # winner accuracy (macro)
         macro_acc = accuracy_score(y_true_cls, np.argmax(y_pred_prob, axis=1))
@@ -51,18 +51,18 @@ class Evaluator:
         # micro‑level metrics (flattened per‑horse)
         n_classes = y_pred_prob.shape[1]
         y_true_onehot = np.eye(n_classes)[y_true_cls]
-        y_true_flat   = y_true_onehot.ravel()
-        y_pred_flat   = y_pred_prob.ravel()
+        y_true_flat = y_true_onehot.ravel()
+        y_pred_flat = y_pred_prob.ravel()
 
         micro = {
             "avg_precision": average_precision_score(y_true_flat, y_pred_flat),
-            "brier_score":   brier_score_loss(y_true_flat, y_pred_flat),
-            "log_loss":      log_loss(y_true_flat, y_pred_flat),
+            "brier_score": brier_score_loss(y_true_flat, y_pred_flat),
+            "log_loss": log_loss(y_true_flat, y_pred_flat),
         }
         fpr, tpr, _ = roc_curve(y_true_flat, y_pred_flat)
         precision, recall, _ = precision_recall_curve(y_true_flat, y_pred_flat)
         micro["roc_curve"] = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "auc": auc(fpr, tpr)}
-        micro["pr_curve"]  = {"precision": precision.tolist(), "recall": recall.tolist()}
+        micro["pr_curve"] = {"precision": precision.tolist(), "recall": recall.tolist()}
 
         return {
             "val_loss": avg_loss,
