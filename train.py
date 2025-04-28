@@ -1,5 +1,6 @@
 import argparse
 import json
+import time
 from pathlib import Path
 
 import yaml
@@ -12,10 +13,14 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--config", type=Path, required=True)
     p.add_argument("--evaluate", nargs="?", default=False, const=True, help="Run evaluation after training")
+    p.add_argument("--stream", nargs="?", default=False, const=True, help="Use streaming IterableDataset during training")
     return p.parse_args()
 
 
 if __name__ == "__main__":
+    start = time.time()
+    print("Starting training...")
+
     args = parse_args()
     cfg = yaml.safe_load(args.config.read_text())
 
@@ -26,6 +31,7 @@ if __name__ == "__main__":
     train_files = race_files[n_val:]
 
     device = "mps" if __import__("torch").backends.mps.is_available() else "cpu"
+    print(f"Using device: {device}")
 
     trainer = Trainer(
         training_features=cfg["training_features"],
@@ -35,6 +41,7 @@ if __name__ == "__main__":
         lr=cfg["learning_rate"],
         batch_size=cfg["batch_size"],
         device=device,
+        stream=args.stream,
     )
     trainer.fit(
         self_train_files=train_files,
@@ -42,12 +49,12 @@ if __name__ == "__main__":
         training_features=cfg["training_features"],
         target="finishOrder",
         limit_contestants=cfg["limit_contestants"],
-        randomize=False,
     )
-    if args.evaluate:
-        if args.test_dir is None:
-            raise SystemExit("--test_dir must be supplied when --evaluate is set")
 
+    end = time.time()
+    print(f"Training completed in {end - start:.2f} seconds")
+
+    if args.evaluate:
         test_files = list(Path(cfg["test_data_dir"]).glob("*.pkl"))
         evaluator = Evaluator(trainer.model, device=device)
         metrics = evaluator.run(
