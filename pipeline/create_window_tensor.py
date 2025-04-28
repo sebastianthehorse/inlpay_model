@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class CreateWindowTensor:
     def __init__(self, df, target, n_horses, window_timesteps):
         self.df = df
@@ -37,7 +38,7 @@ class CreateWindowTensor:
 
         # Create sliding windows using numpy slicing
         for i in range(num_samples):
-            X[i] = data_np[i:i+self.window_timesteps]
+            X[i] = data_np[i : i + self.window_timesteps]
             y[i] = np.array(self.binary_result_array)
 
         return X, y, self.result_array

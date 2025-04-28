@@ -2,10 +2,8 @@ import pandas as pd
 
 
 class PreProcessing:
-    DQ_MAPPING = {
-        31: 1, 32: 2, 33: 3, 34: 4, 35: 5, 36: 6, 37: 7, 38: 8, 39: 9,
-        40: 10, 41: 11, 42: 12, 43: 13, 44: 14, 45: 15
-    }
+    DQ_MAPPING = {31: 1, 32: 2, 33: 3, 34: 4, 35: 5, 36: 6, 37: 7, 38: 8, 39: 9, 40: 10, 41: 11, 42: 12, 43: 13, 44: 14, 45: 15}
+
     def __init__(self, df, target):
         self.df = df
         self.target = target
@@ -23,7 +21,7 @@ class PreProcessing:
         return n_horses
 
     def _get_target_mappings(self):
-        result = {f'{self.target}_{i}': int(self.df[f'{self.target}_{i}'].iloc[-1]) for i in range(1, self.n_horses+1)}
+        result = {f"{self.target}_{i}": int(self.df[f"{self.target}_{i}"].iloc[-1]) for i in range(1, self.n_horses + 1)}
         # first map the DQ results
         target_mapping = {}
         for key, value in result.items():
@@ -32,19 +30,20 @@ class PreProcessing:
         # then map the normal results
         sorted_result = {k: v for k, v in sorted(result.items(), key=lambda item: item[1])}
         for key, value in sorted_result.items():
+            updated_value = value
             if key in target_mapping.keys():
                 continue
             while True:
                 if value not in target_mapping.values():
                     break
-                value += 1
-            target_mapping[key] = value
-        target_int_mapping = {int(k.split('_')[-1]): v for k, v in target_mapping.items()}
+                updated_value += 1
+            target_mapping[key] = updated_value
+        target_int_mapping = {int(k.split("_")[-1]): v for k, v in target_mapping.items()}
         return target_mapping, target_int_mapping
 
     def _get_winner_index(self):
-        winner_column = self.df[[f'winner_{i}' for i in range(1, self.n_horses+1)]].loc[0].idxmax()
-        winner_index = int(winner_column.split('_')[-1])
+        winner_column = self.df[[f"winner_{i}" for i in range(1, self.n_horses + 1)]].loc[0].idxmax()
+        winner_index = int(winner_column.split("_")[-1])
         return winner_index
 
     def _check_valid(self):
@@ -54,7 +53,7 @@ class PreProcessing:
 
 
 class DataProcessing:
-    training_features_required = ['distance_to_finish']
+    training_features_required = ["distance_to_finish"]
 
     def __init__(self, df, winner_index, training_features):
         self.df = df
@@ -63,16 +62,16 @@ class DataProcessing:
 
     def drop_tail(self):
         if self.winner_index:
-            self.df = self.df[self.df[f'distance_to_finish_{self.winner_index}'] > 0]
+            self.df = self.df[self.df[f"distance_to_finish_{self.winner_index}"] > 0]
         else:
-            self.df = self.df[self.df['distance_to_finish_1'] > 0]
+            self.df = self.df[self.df["distance_to_finish_1"] > 0]
 
     def run_on_second_half(self):
-        self.df = self.df.iloc[len(self.df)//2:]
+        self.df = self.df.iloc[len(self.df) // 2 :]
 
     def convert_epoch_to_datetime_and_set_index(self):
-        self.df['epoch'] = pd.to_datetime(self.df['epoch'], origin='unix', unit='ns')
-        self.df = self.df.set_index('epoch')
+        self.df["epoch"] = pd.to_datetime(self.df["epoch"], origin="unix", unit="ns")
+        self.df = self.df.set_index("epoch")
 
     def downsample_data(self):
         self.df = self.df.iloc[::2]
@@ -80,9 +79,9 @@ class DataProcessing:
     def scale_data(self):
         df_scaled = self.df.copy()
         # Separate the different feature columns
-        dtf_colums = [col for col in df_scaled.columns if 'distance_to_finish' in col]
-        speed_columns = [col for col in df_scaled.columns if 'speed' in col]
-        other_features = [col for col in self.training_features if col not in ['distance_to_finish', 'speed']]
+        dtf_colums = [col for col in df_scaled.columns if "distance_to_finish" in col]
+        speed_columns = [col for col in df_scaled.columns if "speed" in col]
+        other_features = [col for col in self.training_features if col not in ["distance_to_finish", "speed"]]
         v_odds_columns = [col for col in df_scaled.columns if col[:-2] in other_features]
         # Separate dataframes for dtf, speed and v_odds
         df_dtf = df_scaled[dtf_colums]
@@ -90,7 +89,8 @@ class DataProcessing:
         df_v_odds = df_scaled[v_odds_columns]
         df_rest = df_scaled.drop(columns=dtf_colums + speed_columns + v_odds_columns, axis=1)
         # Std scaling
-        df_dtf_scaled = (df_dtf - df_dtf.values.mean()) / df_dtf.values.std(ddof=1)
+        # df_dtf_scaled = (df_dtf - df_dtf.values.mean()) / df_dtf.values.std(ddof=1)
+        df_dtf_scaled = (df_dtf - df_dtf.mean()) / df_dtf.std(ddof=1)
         df_speed_scaled = (df_speed - df_speed.values.mean()) / df_speed.values.std(ddof=1)
         df_v_odds_scaled = (df_v_odds - df_v_odds.values.mean()) / df_v_odds.values.std(ddof=1)
         # combine the scaled dataframes and the rest of the data

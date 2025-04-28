@@ -1,0 +1,22 @@
+line-length = 150
+
+lint.select = ["D", "E", "F", "W", "A", "PLC", "PLE", "PLW", "I", "N", "PD"]
+
+lint.ignore = [
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "D203",
+    "D213",
+    "E712",
+    "PD901",
+    "PD011",
+    "N806",
+]
+
+extend-exclude = ["*.ipynb"]
