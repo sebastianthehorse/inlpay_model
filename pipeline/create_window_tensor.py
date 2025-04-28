@@ -6,7 +6,6 @@ class CreateWindowTensor:
         self.df = df
         self.target = target
         self.n_horses = n_horses
-        # self.horse_names = range(1, self.n_horses+1)
         self.window_timesteps = window_timesteps
         self.feature_columns = self._create_feture_columns()
         self.result_array, self.binary_result_array = self._create_result_arrays()
@@ -17,7 +16,6 @@ class CreateWindowTensor:
         return [col for col in self.df.columns if self.target not in col]
 
     def _create_result_arrays(self):
-        # result_array = self.df[[f'{self.target}_{horse}' for horse in self.horse_names]].iloc[-1].values
         result_array = self.df[[col for col in self.df.columns if self.target in col]].iloc[-1].values
         binary_result_array = []
         for result in result_array:
