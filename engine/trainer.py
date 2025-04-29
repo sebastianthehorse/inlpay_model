@@ -1,3 +1,4 @@
+import multiprocessing
 from pathlib import Path
 from typing import Sequence
 
@@ -57,8 +58,8 @@ class Trainer:
         train_data_loader = DataLoader(
             train_data_streamer,
             batch_size=self.batch_size,
-            shuffle=(not self.stream),   # cannot shuffle IterableDataset
-            num_workers=2,
+            shuffle=(not self.stream),  # cannot shuffle IterableDataset
+            num_workers=max(1, multiprocessing.cpu_count() // 2),
         )
         val_data_loader = DataLoader(val_data_streamer, batch_size=self.batch_size)
 
@@ -86,5 +87,5 @@ class Trainer:
                     self.optimizer.step()
                 batch_size = X.size(0)
                 running += loss.item() * batch_size
-                n_seen  += batch_size
+                n_seen += batch_size
         return running / n_seen

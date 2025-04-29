@@ -1,7 +1,7 @@
 import argparse
 import time
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 import yaml
 
@@ -70,7 +70,5 @@ if __name__ == "__main__":
         results_file = results_dir / f"evaluation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         with open(results_file, "w") as f:
             f.write("winner_accuracy,val_loss,avg_precision,brier_score,log_loss,roc_curve,pr_curve\n")
-            f.write(
-                f"{metrics['winner_accuracy']},{metrics['val_loss']},{metrics['avg_precision']},{metrics['brier_score']},{metrics['log_loss']}\n"
-            )
+            f.write(f"{metrics['winner_accuracy']},{metrics['val_loss']},{metrics['avg_precision']},{metrics['brier_score']},{metrics['log_loss']}\n")
         print(f"Evaluation results saved to {results_file}")

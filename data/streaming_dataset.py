@@ -1,6 +1,6 @@
 from pathlib import Path
 from random import Random
-from typing import Iterable, List, Sequence
+from typing import List, Sequence, Iterator, Tuple
 
 import numpy as np
 import torch
@@ -11,8 +11,7 @@ from data.window import CreateWindowTensor
 
 
 class RaceWindowIterableDataset(IterableDataset):
-    """
-    Stream windows one-by-one so memory stays (roughly) constant.
+    """Stream windows one-by-one so memory stays (roughly) constant.
 
     Each worker process gets its own slice of the race-file list
     to avoid duplicate work when num_workers > 0.
@@ -36,13 +35,13 @@ class RaceWindowIterableDataset(IterableDataset):
         self.shuffle_files = shuffle_files
         self.seed = seed
 
-    def _get_shard(self, worker_id: int, num_workers: int) -> Sequence[Path]:
+    def _get_shard(self, worker_id: int, num_workers: int) -> List[Path]:
         """Split the file list so each DataLoader worker gets unique races."""
-        return self.files[worker_id :: num_workers]
+        return self.files[worker_id::num_workers]
 
-    def __iter__(self) -> Iterable:
+    def __iter__(self) -> Iterator[Tuple[torch.Tensor, torch.Tensor]]:
         worker_info = torch.utils.data.get_worker_info()
-        if worker_info is None: # single-process DataLoader
+        if worker_info is None:  # single-process DataLoader
             shard = self.files
             rng = Random(self.seed)
         else:
@@ -83,8 +82,6 @@ class RaceWindowIterableDataset(IterableDataset):
                 y = np.argmax(y_onehot, axis=1)  # single-class label
 
                 for Xi, yi in zip(X, y):
-                    yield torch.as_tensor(Xi, dtype=torch.float32), torch.as_tensor(
-                        yi, dtype=torch.long
-                    )
+                    yield torch.as_tensor(Xi, dtype=torch.float32), torch.as_tensor(yi, dtype=torch.long)
 
             return

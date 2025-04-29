@@ -1,12 +1,10 @@
 from pathlib import Path
-from typing import List, Sequence
+from typing import List, Optional, Sequence
 
 import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
-
-from typing import Optional
 
 from data.feature_engineering import FeatureEngineering
 from data.preprocessing import DataProcessing, PreProcessing
@@ -19,6 +17,7 @@ class RaceWindowDataset(Dataset):
     Each `__getitem__` returns one sliding window (shape: `(timesteps, n_feats)`) and
     its winner index label (int).
     """
+
     def __init__(
         self,
         files: Sequence[Path],
