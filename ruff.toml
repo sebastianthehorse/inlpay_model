@@ -17,6 +17,7 @@ lint.ignore = [
     "PD901",
     "PD011",
     "N806",
+    "PLW2901",
 ]
 
 extend-exclude = ["*.ipynb"]
