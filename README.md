@@ -1,9 +1,4 @@
-# TODO
-* Think about scaling each race individually: It will hide differences between races
-* Try mini batching single races
-* Consider whether the binary_result_array logic (1 if result == 1, else 0): if we want to predict all ranks, switch to a multi-class label array via the existing result_array
-
-# Code
+# Code Format and Style
 
 Run these commands before creating a PR:
 
@@ -12,3 +7,10 @@ Run these commands before creating a PR:
 - `pyright` (Python static type checker)
 
 Or as a one-liner: `ruff format && ruff check --fix && pyright`
+
+# Train CLI
+
+Example
+```bash
+python train.py --config configs/baseline.yaml --evaluate --stream
+```
