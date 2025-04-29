@@ -88,13 +88,10 @@ class DataProcessing:
         df_speed = df_scaled[speed_columns]
         df_v_odds = df_scaled[v_odds_columns]
         df_rest = df_scaled.drop(columns=dtf_colums + speed_columns + v_odds_columns, axis=1)
-        # Std scaling
-        # df_dtf_scaled = (df_dtf - df_dtf.values.mean()) / df_dtf.values.std(ddof=1)
-        # df_speed_scaled = (df_speed - df_speed.values.mean()) / df_speed.values.std(ddof=1)
-        # df_v_odds_scaled = (df_v_odds - df_v_odds.values.mean()) / df_v_odds.values.std(ddof=1)
-        df_dtf_scaled = (df_dtf - df_dtf.mean()) / df_dtf.std(ddof=1)
-        df_speed_scaled = (df_speed - df_speed.mean()) / df_speed.std(ddof=1)
-        df_v_odds_scaled = (df_v_odds - df_v_odds.mean()) / df_v_odds.std(ddof=1)
+        # global std scaling
+        df_dtf_scaled = (df_dtf - df_dtf.values.mean()) / df_dtf.values.std(ddof=1)
+        df_speed_scaled = (df_speed - df_speed.values.mean()) / df_speed.values.std(ddof=1)
+        df_v_odds_scaled = (df_v_odds - df_v_odds.values.mean()) / df_v_odds.values.std(ddof=1)
         # combine the scaled dataframes and the rest of the data
         self.df_scaled = pd.concat([df_dtf_scaled, df_speed_scaled, df_v_odds_scaled, df_rest], axis=1)
 

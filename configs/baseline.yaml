@@ -1,10 +1,12 @@
 # Example hyper‑parameter file (edit as needed)
 train_data_dir: "/Users/sebastian.angermund/Projects/data/hts/train"
 test_data_dir: "/Users/sebastian.angermund/Projects/data/hts/test"
+results_dir: "/Users/sebastian.angermund/Projects/atg/inplay_model/results"
 val_split: 0.2
 batch_size: 64
 learning_rate: 5.0e-4
 limit_contestants: 6
 training_features: [distance_to_finish, v_odds]
 added_features: [leader, distance_to_leader]
+target: "finishOrder"
 window_timesteps: 120

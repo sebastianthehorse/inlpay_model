@@ -42,8 +42,7 @@ class RaceWindowIterableDataset(IterableDataset):
 
     def __iter__(self) -> Iterable:
         worker_info = torch.utils.data.get_worker_info()
-        if worker_info is None:
-            # single-process DataLoader
+        if worker_info is None: # single-process DataLoader
             shard = self.files
             rng = Random(self.seed)
         else:
@@ -71,7 +70,7 @@ class RaceWindowIterableDataset(IterableDataset):
                     if len(df_feature) < self.window_timesteps:
                         continue
                 except ValueError as e:
-                    print(f"#### BROKEN DF: {pkl_file}\n#### STATUS: {e}")
+                    print(f"!!## BROKEN DF: {pkl_file}!!## STATUS: {e}")
                     continue
 
                 windower = CreateWindowTensor(

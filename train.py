@@ -1,7 +1,7 @@
 import argparse
-import json
 import time
 from pathlib import Path
+from datetime import datetime
 
 import yaml
 
@@ -19,16 +19,16 @@ def parse_args():
 
 if __name__ == "__main__":
     start = time.time()
-    print("Starting training...")
 
     args = parse_args()
     cfg = yaml.safe_load(args.config.read_text())
 
-    # Split race files *once* so they stay in the same bucket all run.
     race_files = list(Path(cfg["train_data_dir"]).glob("*.pkl"))
     n_val = int(len(race_files) * cfg["val_split"])
     val_files = race_files[:n_val]
     train_files = race_files[n_val:]
+
+    print(f"Starting training on {len(train_files)} files, validating on {len(val_files)} files")
 
     device = "mps" if __import__("torch").backends.mps.is_available() else "cpu"
     print(f"Using device: {device}")
@@ -44,10 +44,10 @@ if __name__ == "__main__":
         stream=args.stream,
     )
     trainer.fit(
-        self_train_files=train_files,
-        self_val_files=val_files,
+        train_files=train_files,
+        val_files=val_files,
         training_features=cfg["training_features"],
-        target="finishOrder",
+        target=cfg["target"],
         limit_contestants=cfg["limit_contestants"],
     )
 
@@ -60,9 +60,17 @@ if __name__ == "__main__":
         metrics = evaluator.run(
             test_files,
             training_features=cfg["training_features"],
-            target="finishOrder",
+            target=cfg["target"],
             limit_contestants=cfg["limit_contestants"],
             window_timesteps=cfg["window_timesteps"],
         )
-        print("--- Evaluation metrics ---")
-        print(json.dumps(metrics, indent=4))
+        # dump evaluation summary to versioned results csv file
+        results_dir = Path(cfg["results_dir"])
+        results_dir.mkdir(parents=True, exist_ok=True)
+        results_file = results_dir / f"evaluation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        with open(results_file, "w") as f:
+            f.write("winner_accuracy,val_loss,avg_precision,brier_score,log_loss,roc_curve,pr_curve\n")
+            f.write(
+                f"{metrics['winner_accuracy']},{metrics['val_loss']},{metrics['avg_precision']},{metrics['brier_score']},{metrics['log_loss']}\n"
+            )
+        print(f"Evaluation results saved to {results_file}")

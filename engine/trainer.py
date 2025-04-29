@@ -36,36 +36,37 @@ class Trainer:
         self.window_timesteps = window_timesteps
         self.stream = stream
 
-    def fit(self, self_train_files: Sequence[Path], self_val_files: Sequence[Path], **dataset_kwargs):
+    def fit(self, train_files: Sequence[Path], val_files: Sequence[Path], **dataset_kwargs):
         if self.stream:
-            train_ds = RaceWindowIterableDataset(
-                self_train_files,
+            train_data_streamer = RaceWindowIterableDataset(
+                train_files,
                 window_timesteps=self.window_timesteps,
                 **dataset_kwargs,
             )
         else:
-            train_ds = RaceWindowDataset(
-                self_train_files,
+            train_data_streamer = RaceWindowDataset(
+                train_files,
                 window_timesteps=self.window_timesteps,
                 **dataset_kwargs,
             )
-        val_ds = RaceWindowDataset(
-            self_val_files,
+        val_data_streamer = RaceWindowDataset(
+            val_files,
             window_timesteps=self.window_timesteps,
             **dataset_kwargs,
         )
-        train_loader = DataLoader(
-            train_ds,
+        train_data_loader = DataLoader(
+            train_data_streamer,
             batch_size=self.batch_size,
             shuffle=(not self.stream),   # cannot shuffle IterableDataset
             num_workers=2,
         )
-        val_loader = DataLoader(val_ds, batch_size=self.batch_size)
+        val_data_loader = DataLoader(val_data_streamer, batch_size=self.batch_size)
 
         stopper = EarlyStopping(patience=3, min_delta=0.1, mode="min")
-        for epoch in range(1, 100):  # large upper‑bound – we’ll break earlier
-            train_loss = self._run_epoch(train_loader, train=True)
-            val_loss = self._run_epoch(val_loader, train=False)
+
+        for epoch in range(1, 100):  # early stopping will break the loop
+            train_loss = self._run_epoch(train_data_loader, train=True)
+            val_loss = self._run_epoch(val_data_loader, train=False)
             print(f"Epoch {epoch:3d} • train={train_loss:.3f} • val={val_loss:.3f}")
             if stopper.step(val_loss):
                 print("Early stopping triggered → best val loss", f"{stopper.best_score:.3f}")
@@ -83,7 +84,6 @@ class Trainer:
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
-                running += loss.item() * X.size(0)
                 batch_size = X.size(0)
                 running += loss.item() * batch_size
                 n_seen  += batch_size

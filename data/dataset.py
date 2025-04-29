@@ -27,7 +27,7 @@ class RaceWindowDataset(Dataset):
         limit_contestants: int,
         window_timesteps: int,
         randomize: bool = False,
-    ) -> None:
+    ):
         self.X, self.y = self._combine_races_to_tensor(
             files,
             training_features,
@@ -37,9 +37,6 @@ class RaceWindowDataset(Dataset):
             randomize,
         )
 
-    # ------------------------------------------------------------------
-    # Dataset API
-    # ------------------------------------------------------------------
     def __len__(self):
         return self.X.shape[0]
 
@@ -49,9 +46,6 @@ class RaceWindowDataset(Dataset):
             torch.as_tensor(self.y[idx], dtype=torch.long),
         )
 
-    # ------------------------------------------------------------------
-    # Static helpers – reused by the streaming IterableDataset
-    # ------------------------------------------------------------------
     @staticmethod
     def _load_and_validate(pkl_file: Path, target: str) -> Optional[PreProcessing]:
         """Load a pickle file and run the initial validation.
@@ -65,7 +59,6 @@ class RaceWindowDataset(Dataset):
             return None
         return setup
 
-    # ------------------------------------------------------------------
     @staticmethod
     def _make_feature_df(
         setup: PreProcessing,
@@ -74,7 +67,6 @@ class RaceWindowDataset(Dataset):
         limit_contestants: int,
     ) -> pd.DataFrame:
         """Run scaling + feature engineering and return the feature DataFrame."""
-        # Scale raw columns ------------------------------------------------
         data_prep = DataProcessing(
             df=setup.df,
             winner_index=setup.winner_index,
@@ -82,7 +74,6 @@ class RaceWindowDataset(Dataset):
         )
         df_scaled, _ = data_prep.process_data()
 
-        # Feature engineering --------------------------------------------
         feat_prep = FeatureEngineering(
             df=df_scaled,
             training_features=training_features,
@@ -95,9 +86,7 @@ class RaceWindowDataset(Dataset):
         )
         return feat_prep.prepare_features()
 
-    # ------------------------------------------------------------------
     # Internal utility used only by this eager‑loading dataset
-    # ------------------------------------------------------------------
     @staticmethod
     def _combine_races_to_tensor(
         pkl_files: Sequence[Path],
@@ -110,12 +99,10 @@ class RaceWindowDataset(Dataset):
         X_list, y_list = [], []
 
         for pkl_file in pkl_files:
-            # 1) Basic validation ----------------------------------------
             setup = RaceWindowDataset._load_and_validate(pkl_file, target)
             if setup is None:
                 continue  # skip invalid race
 
-            # 2) Feature DataFrame ---------------------------------------
             try:
                 df_feature = RaceWindowDataset._make_feature_df(
                     setup,
@@ -124,13 +111,12 @@ class RaceWindowDataset(Dataset):
                     limit_contestants=limit_contestants,
                 )
             except ValueError as e:
-                print(f"#### BROKEN DF: {pkl_file}\n#### STATUS: {e}")
+                print(f"!!## BROKEN DF: {pkl_file} !!## STATUS: {e}")
                 continue
 
             if len(df_feature) < window_timesteps:
                 continue  # race too short → skip
 
-            # 3) Sliding windows ----------------------------------------
             windower = CreateWindowTensor(
                 df=df_feature,
                 target=target,
