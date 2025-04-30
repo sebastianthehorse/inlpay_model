@@ -26,6 +26,8 @@ class RaceWindowDataset(Dataset):
         limit_contestants: int,
         window_timesteps: int,
         randomize: bool = False,
+        window_stride: int = 1,
+        global_stats=None,
     ):
         self.X, self.y = self._combine_races_to_tensor(
             files,
@@ -34,6 +36,8 @@ class RaceWindowDataset(Dataset):
             limit_contestants,
             window_timesteps,
             randomize,
+            window_stride=window_stride,
+            global_stats=global_stats,
         )
 
     def __len__(self):
@@ -46,7 +50,7 @@ class RaceWindowDataset(Dataset):
         )
 
     @staticmethod
-    def _load_and_validate(pkl_file: Path, target: str) -> Optional[PreProcessing]:
+    def _load_and_validate(pkl_file: Path, target: str, global_stats=None) -> Optional[PreProcessing]:
         """Load a pickle file and run the initial validation.
 
         Returns a *PreProcessing* object if the race passes sanity checks;
@@ -64,12 +68,14 @@ class RaceWindowDataset(Dataset):
         training_features: List[str],
         target: str,
         limit_contestants: int,
+        global_stats=None,
     ) -> pd.DataFrame:
         """Run scaling + feature engineering and return the feature DataFrame."""
         data_prep = DataProcessing(
             df=setup.df,
             winner_index=setup.winner_index,
             training_features=training_features,
+            global_stats=global_stats,
         )
         df_scaled, _ = data_prep.process_data()
 
@@ -94,6 +100,8 @@ class RaceWindowDataset(Dataset):
         limit_contestants: int,
         window_timesteps: int,
         randomize: bool,
+        window_stride: int = 1,
+        global_stats=None,
     ):
         X_list, y_list = [], []
 
@@ -108,6 +116,7 @@ class RaceWindowDataset(Dataset):
                     training_features=training_features,
                     target=target,
                     limit_contestants=limit_contestants,
+                    global_stats=global_stats,
                 )
             except ValueError as e:
                 print(f"!!## BROKEN DF: {pkl_file} !!## STATUS: {e}")
@@ -121,6 +130,7 @@ class RaceWindowDataset(Dataset):
                 target=target,
                 n_horses=limit_contestants,
                 window_timesteps=window_timesteps,
+                stride=window_stride,
             )
             X, y_onehot, _ = windower.create_sliding_windows2()
             X_list.append(X)

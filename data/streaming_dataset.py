@@ -26,6 +26,8 @@ class RaceWindowIterableDataset(IterableDataset):
         window_timesteps: int,
         shuffle_files: bool = True,
         seed: int = 42,
+        window_stride: int = 1,
+        global_stats=None,
     ) -> None:
         self.files = list(files)
         self.training_features = training_features
@@ -34,6 +36,8 @@ class RaceWindowIterableDataset(IterableDataset):
         self.window_timesteps = window_timesteps
         self.shuffle_files = shuffle_files
         self.seed = seed
+        self.window_stride = window_stride
+        self.global_stats = global_stats
 
     def _get_shard(self, worker_id: int, num_workers: int) -> List[Path]:
         """Split the file list so each DataLoader worker gets unique races."""
@@ -65,6 +69,7 @@ class RaceWindowIterableDataset(IterableDataset):
                         training_features=self.training_features,
                         target=self.target,
                         limit_contestants=self.limit_contestants,
+                        global_stats=self.global_stats,
                     )
                     if len(df_feature) < self.window_timesteps:
                         continue
@@ -77,6 +82,7 @@ class RaceWindowIterableDataset(IterableDataset):
                     target=self.target,
                     n_horses=self.limit_contestants,
                     window_timesteps=self.window_timesteps,
+                    stride=self.window_stride,
                 )
                 X, y_onehot, _ = windower.create_sliding_windows2()
                 y = np.argmax(y_onehot, axis=1)  # single-class label

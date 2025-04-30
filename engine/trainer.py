@@ -1,6 +1,6 @@
 import multiprocessing
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, Callable
 
 import torch
 from torch.utils.data import DataLoader
@@ -14,45 +14,52 @@ from models.simple_lstm import SimpleLSTM
 class Trainer:
     def __init__(
         self,
-        training_features,
-        added_features,
-        limit_contestants,
+        # training_features,
+        # added_features,
+        # limit_contestants,
         window_timesteps,
+        model_factory: Callable[[], torch.nn.Module],
         lr: float = 5e-4,
         batch_size: int = 64,
         device: str | torch.device = "cpu",
         stream: bool = False,
+        global_stats=None,
     ):
         self.device = torch.device(device)
         self.batch_size = batch_size
 
-        self.model = SimpleLSTM(
-            training_features=training_features,
-            added_features=added_features,
-            num_contestants=limit_contestants,
-        ).to(self.device)
+        # self.model = SimpleLSTM(
+        #     training_features=training_features,
+        #     added_features=added_features,
+        #     num_contestants=limit_contestants,
+        # ).to(self.device)
+        self.model = model_factory().to(self.device)
 
         self.loss_fn = torch.nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
         self.window_timesteps = window_timesteps
         self.stream = stream
+        self.global_stats = global_stats
 
     def fit(self, train_files: Sequence[Path], val_files: Sequence[Path], **dataset_kwargs):
         if self.stream:
             train_data_streamer = RaceWindowIterableDataset(
                 train_files,
                 window_timesteps=self.window_timesteps,
+                global_stats=self.global_stats,
                 **dataset_kwargs,
             )
         else:
             train_data_streamer = RaceWindowDataset(
                 train_files,
                 window_timesteps=self.window_timesteps,
+                global_stats=self.global_stats,
                 **dataset_kwargs,
             )
         val_data_streamer = RaceWindowDataset(
             val_files,
             window_timesteps=self.window_timesteps,
+            global_stats=self.global_stats,
             **dataset_kwargs,
         )
         train_data_loader = DataLoader(

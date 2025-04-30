@@ -55,10 +55,11 @@ class PreProcessing:
 class DataProcessing:
     training_features_required = ["distance_to_finish"]
 
-    def __init__(self, df, winner_index, training_features):
+    def __init__(self, df, winner_index, training_features, global_stats: dict[str, tuple[float, float]] | None = None):
         self.df = df
         self.winner_index = winner_index
         self.training_features = training_features
+        self.global_stats = global_stats
 
     def drop_tail(self):
         if self.winner_index:
@@ -89,11 +90,18 @@ class DataProcessing:
         df_v_odds = df_scaled[v_odds_columns]
         df_rest = df_scaled.drop(columns=dtf_colums + speed_columns + v_odds_columns, axis=1)
         # std scaling
-        df_dtf_scaled = (df_dtf - df_dtf.values.mean()) / df_dtf.values.std(ddof=1)
-        df_speed_scaled = (df_speed - df_speed.values.mean()) / df_speed.values.std(ddof=1)
-        df_v_odds_scaled = (df_v_odds - df_v_odds.values.mean()) / df_v_odds.values.std(ddof=1)
+        if self.global_stats is None:
+            df_dtf_scaled = (df_dtf - df_dtf.values.mean()) / df_dtf.values.std(ddof=1)
+            df_speed_scaled = (df_speed - df_speed.values.mean()) / df_speed.values.std(ddof=1)
+            df_v_odds_scaled = (df_v_odds - df_v_odds.values.mean()) / df_v_odds.values.std(ddof=1)
+        else:
+            df_dtf_scaled = (df_dtf - self.global_stats["distance_to_finish"][0]) / self.global_stats["distance_to_finish"][1]
+            df_speed_scaled = (df_speed - self.global_stats["speed"][0]) / self.global_stats["speed"][1]
+            df_v_odds_scaled = (df_v_odds - self.global_stats["v_odds"][0]) / self.global_stats["v_odds"][1]
+
         # combine the scaled dataframes and the rest of the data
         self.df_scaled = pd.concat([df_dtf_scaled, df_speed_scaled, df_v_odds_scaled, df_rest], axis=1)
+        self.df_scaled.reindex(sorted(df_scaled.columns), axis=1)
 
     def round_df(self):
         self.df_scaled = self.df_scaled.round(2)
